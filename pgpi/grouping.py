@@ -187,7 +187,7 @@ class Grouping(Repository):
 
         if self.check_serverId(serverId) == False:
             if Log.error <= self.LogLevel:
-                print("Error: serverId '{}' is not registered.".format(serverId))
+                print(f"Error: serverId '{serverId}' is not registered.")
             sys.exit(1)
 
         self.__set_serverId(serverId)
@@ -217,7 +217,7 @@ class Grouping(Repository):
                 _queryid = int(_row[6])
                 _planid = int(_row[7])
 
-                if _current_seqid < _seqid and _seqid <= _max_seqid:
+                if _current_seqid < _seqid <= _max_seqid:
                     """
                     Get the path of the combined plan (_queryid and _planid),
                     stored in the Grouping dir.
@@ -228,7 +228,7 @@ class Grouping(Repository):
 
                     if os.path.isfile(_logpath) == False:
                         if Log.debug1 <= self.LogLevel:
-                            print("Debug1: seqid({}) is not found.)".format(_seqid))
+                            print(f"Debug1: seqid({_seqid}) is not found.)")
                         continue
                     """
                     Get the path of the plan (_queryid and _planid) that is stored
@@ -247,8 +247,8 @@ class Grouping(Repository):
                     """
                     self.__combine_plan(_planpath, _logpath)
                     if Log.debug3 <= self.LogLevel:
-                        print("Debug3: planpath={}".format(_planpath))
-                        print("Debug3:    logpath={}".format(_logpath))
+                        print(f"Debug3: planpath={_planpath}")
+                        print(f"Debug3:    logpath={_logpath}")
 
             """Update grouping/stat.dat."""
             self.update_grouping_stat_file(self.ServerId, _max_seqid)

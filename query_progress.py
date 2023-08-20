@@ -28,8 +28,7 @@ from pgpi import Database, Repository, QueryProgress, Log
 if __name__ == "__main__":
 
     def usage():
-        _msg = "Usage:\n"
-        _msg += "\tquit\t\t: Quit this program\n"
+        _msg = "Usage:\n" + "\tquit\t\t: Quit this program\n"
         _msg += "\tv, verbose\t: Switch Verbose mode <--> Normal mode\n"
         _msg += "\th, help\t\t: Show help message\n"
         print(_msg)

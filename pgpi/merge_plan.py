@@ -268,11 +268,11 @@ class MergeRows(Repository, PrepareMergeRows):
         _num_leader_node = self.count_nodes(leader_plan)
         _i = _num_worker_node
         _j = _num_leader_node
-        while 0 < _i:
-            rows = 0
-            # Add all parallel workers' "Actual Rows" to `rows`.
-            for _k in range(0, len(worker_plans)):
-                rows += self.__get_actual_rows(worker_plans[_k], _i)
+        while _i > 0:
+            rows = sum(
+                self.__get_actual_rows(worker_plans[_k], _i)
+                for _k in range(0, len(worker_plans))
+            )
             # Adjust "Plan Rows" and "Actual Rows" of `leader_plan`.
             self.__add_rows(leader_plan, rows, _j)
             _i -= 1
@@ -331,19 +331,20 @@ class AddRows(Repository, PrepareMergeRows):
 
     def __add_rows(self, Plans):
         def add_rows_and_loops(plan):
-            if "Workers" in plan:
-                _lr = plan["Actual Rows"]
-                _ll = plan["Actual Loops"]
-                _wr = 0
-                _wl = 0
-                if plan["MergeFlag"] == "True":
-                    _npr = plan["Plan Rows"] * plan["NormalizePlanParam"]
-                    plan.update({"Plan Rows": _npr})
-                    for _wdata in plan["Workers"]:
-                        _wr += _wdata["Actual Rows"]
-                        _wl += _wdata["Actual Loops"]
-                plan.update({"Actual Rows": _lr + _wr})
-                plan.update({"Actual Loops": _ll + _wl})
+            if "Workers" not in plan:
+                return
+            _lr = plan["Actual Rows"]
+            _ll = plan["Actual Loops"]
+            _wr = 0
+            _wl = 0
+            if plan["MergeFlag"] == "True":
+                _npr = plan["Plan Rows"] * plan["NormalizePlanParam"]
+                plan.update({"Plan Rows": _npr})
+                for _wdata in plan["Workers"]:
+                    _wr += _wdata["Actual Rows"]
+                    _wl += _wdata["Actual Loops"]
+            plan.update({"Actual Rows": _lr + _wr})
+            plan.update({"Actual Loops": _ll + _wl})
 
         if isinstance(Plans, list):
             for _plan in Plans:
@@ -374,14 +375,14 @@ class AddRows(Repository, PrepareMergeRows):
 
         if os.path.isfile(_jpath):
             if Log.notice <= self.LogLevel:
-                print("Notice: seqid({}) already exists.".format(str(seqid)))
+                print(f"Notice: seqid({str(seqid)}) already exists.")
             return
 
         # Read plan.
-        _jpath = self.path(_jdirpath, str(seqid) + ".tmp")
+        _jpath = self.path(_jdirpath, f"{str(seqid)}.tmp")
         if os.path.isfile(_jpath) == False:
             if Log.warning <= self.LogLevel:
-                print("Warning: '{}' not found.".format(_jpath))
+                print(f"Warning: '{_jpath}' not found.")
             return
         else:
             _dict0 = self.read_plan_json(_jpath)
@@ -411,7 +412,7 @@ class AddRows(Repository, PrepareMergeRows):
         self.write_plan_json(_plan, _jpath)
         # Delete tmp file.
         if os.path.isfile(_jpath):
-            _jpath = self.path(_jdirpath, str(seqid) + ".tmp")
+            _jpath = self.path(_jdirpath, f"{str(seqid)}.tmp")
             os.remove(_jpath)
 
 
@@ -496,8 +497,8 @@ class MergePlan(AddRows, MergeRows):
             _reader = csv.reader(f, delimiter=",", quoting=csv.QUOTE_NONE)
             for row in _reader:
                 _seqid = int(row[0])
-                _queryid = int(row[6])
-                _planid = int(row[7])
-                if current_seqid < _seqid and _seqid <= max_seqid:
+                if current_seqid < _seqid <= max_seqid:
+                    _queryid = int(row[6])
+                    _planid = int(row[7])
                     self.add_rows(_seqid, _queryid, _planid)
         f.close()

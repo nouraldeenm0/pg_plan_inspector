@@ -34,23 +34,23 @@ class GetTables(MergePlan):
         except Exception as err:
             _cur.close()
             if Log.error <= self.LogLevel:
-                print("SQL Error:'{}'".format(sql))
+                print(f"SQL Error:'{sql}'")
             sys.exit(1)
         if _cur.rowcount == 0:
             _cur.close()
             if Log.info <= self.LogLevel:
-                print("Info: the number of result is 0:'{}'".format(sql))
+                print(f"Info: the number of result is 0:'{sql}'")
             return None
         return _cur
 
     def __get_max_seqid(self, connection):
         _max_seqid = -1
-        _sql = "SELECT max(seqid) FROM " + self.SCHEMA + "." + self.LOG_TABLE
+        _sql = f"SELECT max(seqid) FROM {self.SCHEMA}.{self.LOG_TABLE}"
         _cur = self.__exec_select_cmd(connection, _sql)
         for _row in _cur:
             _max_seqid = _row[0]
         _cur.close()
-        return _max_seqid if isinstance(_max_seqid, int) == True else 0
+        return _max_seqid if isinstance(_max_seqid, int) else 0
 
     def __get_log(self, connection, current_seqid, max_seqid):
         """
@@ -63,69 +63,67 @@ class GetTables(MergePlan):
             if os.path.exists(dirpath) == False:
                 os.makedirs(dirpath)
             _path = self.path(dirpath, str(seqid) + postfix)
-            _qfp = open(_path, mode="w")
-            _qfp.write("{}".format(data))
-            _qfp.close()
+            with open(_path, mode="w") as _qfp:
+                _qfp.write("{}".format(data))
 
         if current_seqid >= max_seqid:
             return 0
 
         _sql = "SELECT seqid, starttime, endtime, database, pid,"
         _sql += " nested_level, queryid, query, planid, plan, plan_json"
-        _sql += "   FROM " + self.SCHEMA + "." + self.LOG_TABLE
-        _sql += "     WHERE " + str(current_seqid) + " < seqid AND seqid <= "
-        _sql += str(max_seqid) + " ORDER BY seqid"
+        _sql += f"   FROM {self.SCHEMA}.{self.LOG_TABLE}"
+        _sql += f"     WHERE {str(current_seqid)} < seqid AND seqid <= "
+        _sql += f"{str(max_seqid)} ORDER BY seqid"
         _cur = self.__exec_select_cmd(connection, _sql)
         if _cur is None:
             return 0
         _num_rows = _cur.rowcount
 
-        _logfp = open(self.get_log_csv_path(self.ServerId), mode="a")
-        for _row in _cur:
-            _seqid = _row[0]
-            _starttime = _row[1]
-            _endtime = _row[2]
-            _database = _row[3]
-            _pid = _row[4]
-            _nested_level = _row[5]
-            _queryid = int(_row[6])
-            _query = _row[7]
-            if _row[8] is not None:
-                _planid = int(_row[8])
-            else:
-                continue
-            _plan = _row[9]
-            _plan_json = _row[10]
+        with open(self.get_log_csv_path(self.ServerId), mode="a") as _logfp:
+            for _row in _cur:
+                _seqid = _row[0]
+                _starttime = _row[1]
+                _endtime = _row[2]
+                _database = _row[3]
+                _pid = _row[4]
+                _nested_level = _row[5]
+                _queryid = int(_row[6])
+                _query = _row[7]
+                if _row[8] is not None:
+                    _planid = int(_row[8])
+                else:
+                    continue
+                _plan = _row[9]
+                _plan_json = _row[10]
 
-            # Write query info into log.csv.
-            _logfp.write(
-                "{},{},{},{},{},{},{},{}\n".format(
-                    _seqid,
-                    _starttime,
-                    _endtime,
-                    _database,
-                    _pid,
-                    _nested_level,
-                    _queryid,
-                    _planid,
+                # Write query info into log.csv.
+                _logfp.write(
+                    "{},{},{},{},{},{},{},{}\n".format(
+                        _seqid,
+                        _starttime,
+                        _endtime,
+                        _database,
+                        _pid,
+                        _nested_level,
+                        _queryid,
+                        _planid,
+                    )
                 )
-            )
 
-            """Store query."""
-            store_log(_seqid, self.get_query_dir_path(self.ServerId, _queryid), _query)
-            """Store plan."""
-            store_log(
-                _seqid, self.get_plan_dir_path(self.ServerId, _queryid, _planid), _plan
-            )
-            """Store plan_json."""
-            store_log(
-                _seqid,
-                self.get_plan_json_dir_path(self.ServerId, _queryid, _planid),
-                _plan_json,
-                ".tmp",
-            )
+                """Store query."""
+                store_log(_seqid, self.get_query_dir_path(self.ServerId, _queryid), _query)
+                """Store plan."""
+                store_log(
+                    _seqid, self.get_plan_dir_path(self.ServerId, _queryid, _planid), _plan
+                )
+                """Store plan_json."""
+                store_log(
+                    _seqid,
+                    self.get_plan_json_dir_path(self.ServerId, _queryid, _planid),
+                    _plan_json,
+                    ".tmp",
+                )
 
-        _logfp.close()
         _cur.close()
 
         return _num_rows
@@ -153,7 +151,7 @@ class GetTables(MergePlan):
 
         if self.check_serverId(serverId) == False:
             if Log.error <= self.LogLevel:
-                print("Error: serverId '{}' is not registered.".format(serverId))
+                print(f"Error: serverId '{serverId}' is not registered.")
             sys.exit(1)
 
         self.__set_serverId(serverId)
@@ -162,7 +160,7 @@ class GetTables(MergePlan):
         db = Database(self.base_dir)
         _conn = db.connect(serverId)
         if Log.info <= self.LogLevel:
-            print("Info: Connection established to '{}'.".format(self.ServerId))
+            print(f"Info: Connection established to '{self.ServerId}'.")
         """Get max seqid."""
         _max_seqid = self.__get_max_seqid(_conn)
 
@@ -178,9 +176,8 @@ class GetTables(MergePlan):
             self.add_workers_rows(serverId, _current_seqid, _max_seqid)
             """Update the stat file."""
             self.update_tables_stat_file(serverId, _max_seqid)
-        else:
-            if Log.info <= self.LogLevel:
-                print("Info: data is already updated.")
+        elif Log.info <= self.LogLevel:
+            print("Info: data is already updated.")
 
         """Commit transaction and Close database connection."""
         _conn.commit()

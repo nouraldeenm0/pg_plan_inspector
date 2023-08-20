@@ -100,14 +100,14 @@ class Common:
                 plan = func(plan)
                 if "Plans" in plan:
                     self.apply_func_in_each_node(func, plan["Plans"])
-            return
         else:
             Plans = func(Plans)
             if "Plan" in Plans:
                 self.apply_func_in_each_node(func, Plans["Plan"])
             if "Plans" in Plans:
                 self.apply_func_in_each_node(func, Plans["Plans"])
-            return
+
+        return
 
     def delete_unnecessary_objects(self, delete_objects_func, Plans):
         self.apply_func_in_each_node(delete_objects_func, Plans)
@@ -169,65 +169,63 @@ class Common:
 
     def read_plan_json(self, planpath):
         """Read the plan from planpath."""
-        _js = open(planpath, "r")
-        _json_dict = json.load(_js)
-        _js.close()
+        with open(planpath, "r") as _js:
+            _json_dict = json.load(_js)
         return _json_dict
 
     def write_plan_json(self, jdict, planpath):
         """Write the plan (jdict) to planpath."""
 
         _jdp = json.dumps(jdict, ensure_ascii=False, indent=4, separators=(",", ": "))
-        _fp = open(planpath, "w")
-        _fp.write("{}".format(_jdp))
-        _fp.close()
+        with open(planpath, "w") as _fp:
+            _fp.write(f"{_jdp}")
 
     def isScan(self, plan):
         """Check this plan is scan or not."""
-        for _i in (
-            "Result",
-            "Seq Scan",
-            "Sample Scan",
-            "Index Scan",
-            "Index Only Scan",
-            "Bitmap Index Scan",
-            "Bitmap Heap Scan",
-            "Tid Scan",
-            "Function Scan",
-            "Table Function Scan",
-            "Values Scan",
-            "CTE Scan",
-            "Named Tuplestore Scan",
-            "WorkTable Scan",
-        ):  # 'Foreign Scan', 'Aggregate', 'SetOp', 'Limit'
-            if _i in plan["Node Type"]:
-                return True
-        return False
+        return any(
+            _i in plan["Node Type"]
+            for _i in (
+                "Result",
+                "Seq Scan",
+                "Sample Scan",
+                "Index Scan",
+                "Index Only Scan",
+                "Bitmap Index Scan",
+                "Bitmap Heap Scan",
+                "Tid Scan",
+                "Function Scan",
+                "Table Function Scan",
+                "Values Scan",
+                "CTE Scan",
+                "Named Tuplestore Scan",
+                "WorkTable Scan",
+            )
+        )
 
     def isOuter(self, plan):
         """Check this plan is outer path or not."""
         if "Parent Relationship" in plan:
-            return True if plan["Parent Relationship"] == "Outer" else False
+            return plan["Parent Relationship"] == "Outer"
         return False
 
     def isInner(self, plan):
         """Check this plan is inner path or not."""
         if "Parent Relationship" in plan:
-            return True if plan["Parent Relationship"] == "Inner" else False
+            return plan["Parent Relationship"] == "Inner"
         return False
 
     def count_removed_rows(self, plan):
         """Count Removed Rows."""
-        _rr = 0
-        for _i in (
-            "Rows Removed by Filter",
-            "Rows Removed by Index Recheck",
-            "Rows Removed by Join Filter",
-            "Rows Removed by Conflict Filter",
-        ):
-            if _i in plan:
-                _rr += plan[_i]
-        return _rr
+        return sum(
+            plan[_i]
+            for _i in (
+                "Rows Removed by Filter",
+                "Rows Removed by Index Recheck",
+                "Rows Removed by Join Filter",
+                "Rows Removed by Conflict Filter",
+            )
+            if _i in plan
+        )
 
     def get_inputs(self, plan):
         """Get outer and inter actual rows."""

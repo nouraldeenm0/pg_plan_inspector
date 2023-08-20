@@ -41,12 +41,12 @@ class Database(Repository):
 
         if self.check_serverId(serverId) == False:
             if Log.error <= self.LogLevel:
-                print("Error: serverId '{}' is not registered.".format(serverId))
+                print(f"Error: serverId '{serverId}' is not registered.")
             sys.exit(1)
 
-        _conn = ""
         _config = configparser.ConfigParser()
         _config.read(self.get_conf_file_path())
+        _conn = ""
         for _section in _config.sections():
             if _section == serverId:
                 _conn = (
@@ -55,12 +55,7 @@ class Database(Repository):
                     + " port="
                     + str(_config[_section]["port"])
                 )
-                _conn += (
-                    " dbname="
-                    + database
-                    + " user="
-                    + str(_config[_section]["username"])
-                )
+                _conn += f" dbname={database} user=" + str(_config[_section]["username"])
 
                 """
                 If 'input_password' is True, prompt to enter the password.
@@ -68,7 +63,7 @@ class Database(Repository):
                 if "input_password" in _config[_section]:
                     if str.lower(_config[_section]["input_password"]) == "true":
                         _password = getpass.getpass()
-                        _conn += " password=" + _password
+                        _conn += f" password={_password}"
                         return _conn
 
                 """
@@ -88,7 +83,7 @@ class Database(Repository):
         try:
             _connection = psycopg2.connect(_conn)
         except psycopg2.OperationalError as e:
-            print("Error: Could not connect to '{}'".format(serverId))
+            print(f"Error: Could not connect to '{serverId}'")
             sys.exit(1)
         _connection.autocommit = True
         return _connection

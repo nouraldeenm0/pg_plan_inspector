@@ -36,13 +36,13 @@ if __name__ == "__main__":
         base_dir = args.basedir
         rp = Repository(base_dir, log_level=LOG_LEVEL)
         rp.create_repo()
-        print("Created {}".format(base_dir + "/" + REPOSITORY + "."))
+        print(f"Created {base_dir}/{REPOSITORY}.")
         del rp
 
     def get_data(args):
         base_dir = args.basedir
         serverId = args.serverid
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         gt = GetTables(base_dir, log_level=LOG_LEVEL)
         _num_rows = gt.get_tables(serverId)
         if _num_rows > 0:
@@ -56,14 +56,14 @@ if __name__ == "__main__":
     def push_data(args):
         base_dir = args.basedir
         serverId = args.serverid
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         pp = PushParam(base_dir, log_level=LOG_LEVEL)
         pp.push_param(serverId)
         del pp
 
     def check_data(args):
         base_dir = args.basedir
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         rp = Repository(base_dir, log_level=LOG_LEVEL)
         rp.check_host_conf_file()
         rp.check_dirs()
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         base_dir = args.basedir
         old_serverId = args.old_serverid
         new_serverId = args.new_serverid
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         rp = Repository(base_dir, log_level=LOG_LEVEL)
         rp.rename_serverId(old_serverId, new_serverId)
         del rp
@@ -81,33 +81,21 @@ if __name__ == "__main__":
     def delete_data(args):
         base_dir = args.basedir
         serverId = args.serverid
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         rp = Repository(base_dir, log_level=LOG_LEVEL)
         if rp.check_serverId(serverId) == False:
             del rp
-            print(
-                "Error: Directory:{} does not exist in {}".format(
-                    serverId, base_dir + "/" + REPOSITORY
-                )
-            )
+            print(f"Error: Directory:{serverId} does not exist in {base_dir}/{REPOSITORY}")
             sys.exit(1)
         while True:
-            _msg = "Delete " + serverId + "'s data? (yes, no)"
+            _msg = f"Delete {serverId}'s data? (yes, no)"
             try:
                 _input = input(_msg)
                 if str.lower(_input) == "yes":
                     if rp.remove_serverId(serverId):
-                        print(
-                            "Deleted directory:{} in {}".format(
-                                serverId, base_dir + "/" + REPOSITORY
-                            )
-                        )
+                        print(f"Deleted directory:{serverId} in {base_dir}/{REPOSITORY}")
                     else:
-                        print(
-                            "Could not delete {} directory in {}".format(
-                                serverId, base_dir + "/" + REPOSITORY
-                            )
-                        )
+                        print(f"Could not delete {serverId} directory in {base_dir}/{REPOSITORY}")
                     break
                 elif str.lower(_input) == "no":
                     break
@@ -119,7 +107,7 @@ if __name__ == "__main__":
 
     def show_data(args):
         base_dir = args.basedir
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         rp = Repository(base_dir, log_level=LOG_LEVEL)
         rp.show_hosts(args.verbose)
         del rp
@@ -127,7 +115,7 @@ if __name__ == "__main__":
     def reset_data(args):
         base_dir = args.basedir
         serverId = args.serverid
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         rp = Repository(base_dir, log_level=LOG_LEVEL)
         print("Reset grouping")
         rp.reset_grouping_dir(serverId)
@@ -138,7 +126,7 @@ if __name__ == "__main__":
     def recalc_data(args):
         base_dir = args.basedir
         serverId = args.serverid
-        print("Use {}:".format(base_dir + "/" + REPOSITORY))
+        print(f"Use {base_dir}/{REPOSITORY}:")
         gp = Grouping(base_dir, log_level=LOG_LEVEL)
         gp.grouping(serverId)
         rg = Regression(base_dir, log_level=LOG_LEVEL)

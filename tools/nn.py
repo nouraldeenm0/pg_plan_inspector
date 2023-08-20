@@ -50,10 +50,7 @@ if __name__ == "__main__":
         return model
 
     def merge_lists(xouter, xinner):
-        _x = []
-        for i in range(0, len(xouter)):
-            _x.append([xouter[i], xinner[i]])
-        return _x
+        return [[xouter[i], xinner[i]] for i in range(0, len(xouter))]
 
     LOG_LEVEL = Log.info
     REPOSITORY = Common.REPOSITORY_DIR

@@ -29,13 +29,13 @@ class Repository(Common):
     def secure_check(self, path, ref_mode):
         if os.path.exists(path) == False:
             if Log.notice <= self.LogLevel:
-                print("Notice: '{}' is not found.".format(path))
+                print(f"Notice: '{path}' is not found.")
             return True
-        MASK = int(0o777)
+        MASK = 511
         _mode = int(os.stat(path).st_mode & MASK)
         _mode |= ref_mode
         _mode ^= ref_mode
-        return True if int(_mode) == 0 else False
+        return int(_mode) == 0
 
     """
     stat file related functions.
@@ -60,13 +60,12 @@ class Repository(Common):
         _dirpath = self.dirpath([serverId, _dir])
         _path = self.path(_dirpath, self.STAT_FILE)
 
-        if os.path.exists(_dirpath):
-            stat = configparser.ConfigParser()
-            stat.read(_path)
-            if stat[serverId]:
-                return int(stat[serverId]["seqid"])
-        else:
-            return int(0)
+        if not os.path.exists(_dirpath):
+            return 0
+        stat = configparser.ConfigParser()
+        stat.read(_path)
+        if stat[serverId]:
+            return int(stat[serverId]["seqid"])
 
     """
     Check and create directory if not found.
@@ -87,22 +86,22 @@ class Repository(Common):
     def __reset_dir(self, serverId, _dir, update_stat_file):
         if self.check_serverId(serverId) == False:
             if Log.error <= self.LogLevel:
-                print("Error: serverId '{}' is not registered.".format(serverId))
+                print(f"Error: serverId '{serverId}' is not registered.")
             sys.exit(1)
 
         _rsdirpath = self.dirpath([serverId, _dir])
         if os.path.exists(_rsdirpath):
             if _dir == self.TABLES_DIR:
                 if Log.debug2 <= self.LogLevel:
-                    print("Debug2: rm dir '{}'".format(_rsdirpath))
+                    print(f"Debug2: rm dir '{_rsdirpath}'")
                 shutil.rmtree(_rsdirpath)
-                # update_stat_file(serverId, 0)
+                        # update_stat_file(serverId, 0)
             else:
-                _d = str(_rsdirpath) + "/" + "[0-9][0-9][0-9]"
+                _d = f"{str(_rsdirpath)}/[0-9][0-9][0-9]"
                 _dirs = glob.glob(_d, recursive=True)
                 for _dir in _dirs:
                     if Log.debug2 <= self.LogLevel:
-                        print("Debug2: rm '{}'".format(_dir))
+                        print(f"Debug2: rm '{_dir}'")
                     shutil.rmtree(_dir)
                 update_stat_file(serverId, 0)
 
@@ -111,16 +110,14 @@ class Repository(Common):
     """
 
     def set_base_dir(self, base_dir="."):
-        self.base_dir = base_dir + "/"
+        self.base_dir = f"{base_dir}/"
 
     def get_conf_file_path(self):
         _path = self.base_dir + self.REPOSITORY_DIR + "/" + self.CONF_FILE
         if os.path.exists(_path):
             if self.secure_check(_path, self.DEFAULT_HOSTS_CONF_MODE) == False:
                 print(
-                    "Error: {}'s mode should be set to {} or more secure.".format(
-                        self.CONF_FILE, oct(self.DEFAULT_HOSTS_CONF_MODE)
-                    )
+                    f"Error: {self.CONF_FILE}'s mode should be set to {oct(self.DEFAULT_HOSTS_CONF_MODE)} or more secure."
                 )
                 sys.exit(1)
         return _path
@@ -128,7 +125,7 @@ class Repository(Common):
     def check_serverId(self, serverId):
         if self.is_serverId_valid(serverId) == False:
             if Log.error <= self.LogLevel:
-                print("Error: serverId='{}' is invalid.".format(serverId))
+                print(f"Error: serverId='{serverId}' is invalid.")
                 print("\tserverId must be the following regular expression:[A-z0-9_]+")
             sys.exit(1)
         _path = self.get_conf_file_path()
@@ -155,9 +152,9 @@ class Repository(Common):
         _dir = self.base_dir + self.REPOSITORY_DIR + "/"
         if isinstance(dirlist, list):
             for d in dirlist:
-                _dir += d + "/"
+                _dir += f"{d}/"
         else:
-            _dir += dirlist + "/"
+            _dir += f"{dirlist}/"
         return _dir
 
     def path(self, dirpath, filename):
@@ -203,21 +200,17 @@ class Repository(Common):
         os.chmod(_conf_file_path, self.DEFAULT_HOSTS_CONF_MODE)
 
     def is_serverId_valid(self, serverId):
-        return (
-            True if re.search(r"\w+", serverId, flags=0).group() == serverId else False
-        )
+        return re.search(r"\w+", serverId, flags=0).group() == serverId
 
     def check_host_conf_file(self):
         _path = self.get_conf_file_path()
         # Check mode.
         print("Checking hosts.conf mode....")
         if self.secure_check(_path, self.DEFAULT_HOSTS_CONF_MODE) == True:
-            print("\tReport: {} is secure.".format(self.CONF_FILE))
+            print(f"\tReport: {self.CONF_FILE} is secure.")
         else:
             print(
-                "\tError: {}'s mode should be set to {} or more secure.".format(
-                    self.CONF_FILE, oct(self.DEFAULT_HOSTS_CONF_MODE)
-                )
+                f"\tError: {self.CONF_FILE}'s mode should be set to {oct(self.DEFAULT_HOSTS_CONF_MODE)} or more secure."
             )
 
         # Check serverIds.
@@ -227,7 +220,7 @@ class Repository(Common):
         _ret = True
         for s in _config.sections():
             if self.is_serverId_valid(s) == False:
-                print("\tError: serverId '{}' is invalid name.".format(s))
+                print(f"\tError: serverId '{s}' is invalid name.")
                 _ret = False
         if _ret == True:
             print("\tReport: All serverIds are valid.")
@@ -240,12 +233,10 @@ class Repository(Common):
             _dirpath = _path + _dir
             if os.path.isdir(_dirpath):
                 if self.secure_check(_dirpath, self.DEFAULT_DIR_MODE) == True:
-                    print("\tReport: {} is secure.".format(_dirpath))
+                    print(f"\tReport: {_dirpath} is secure.")
                 else:
                     print(
-                        "\tError: {}'s mode should be set to {} or more secure.".format(
-                            _dirpath, oct(self.DEFAULT_DIR_MODE)
-                        )
+                        f"\tError: {_dirpath}'s mode should be set to {oct(self.DEFAULT_DIR_MODE)} or more secure."
                     )
                 for subdir in (
                     self.TABLES_DIR,
@@ -253,14 +244,12 @@ class Repository(Common):
                     self.REGRESSION_DIR,
                     self.FORMATTED_REGRESSION_PARAMS_DIR,
                 ):
-                    _subdirpath = _dirpath + "/" + subdir
+                    _subdirpath = f"{_dirpath}/{subdir}"
                     if self.secure_check(_subdirpath, self.DEFAULT_DIR_MODE) == True:
-                        print("\tReport: {} is secure.".format(_subdirpath))
+                        print(f"\tReport: {_subdirpath} is secure.")
                     else:
                         print(
-                            "\tError: {}'s mode should be set to {} or more secure.".format(
-                                _subdirpath, oct(self.DEFAULT_DIR_MODE)
-                            )
+                            f"\tError: {_subdirpath}'s mode should be set to {oct(self.DEFAULT_DIR_MODE)} or more secure."
                         )
 
     def rename_serverId(self, old_serverId, new_serverId):
@@ -280,14 +269,14 @@ class Repository(Common):
         mv_dir(old_serverId, new_serverId)
         # Change serverId from old_serverId to new_serverId in the host.conf file.
         _conf_path = self.get_conf_file_path()
-        _conf_tmp_path = _conf_path + ".tmp"
+        _conf_tmp_path = f"{_conf_path}.tmp"
         os.rename(_conf_path, _conf_tmp_path)
         try:
             fp_conf = open(_conf_path, mode="w")
             with open(_conf_tmp_path, mode="r") as fp_conf_tmp:
                 for _line in fp_conf_tmp:
-                    if str("[" + old_serverId + "]") in _line:
-                        _line = str("[" + new_serverId + "]" + "\n")
+                    if str(f"[{old_serverId}]") in _line:
+                        _line = str(f"[{new_serverId}]" + "\n")
                     fp_conf.write(_line)
             os.remove(_conf_tmp_path)
         except Exception as e:
@@ -325,13 +314,13 @@ class Repository(Common):
         print("ServerId:")
         for section in _config.sections():
             if "host" in _config[section]:
-                print("\t{}".format(section))
+                print(f"\t{section}")
                 if verbose == True:
-                    print("\t\thost = {}".format(_config[section]["host"]))
+                    print(f'\t\thost = {_config[section]["host"]}')
                     if "port" in _config[section]:
-                        print("\t\tport = {}".format(_config[section]["port"]))
+                        print(f'\t\tport = {_config[section]["port"]}')
                     if "username" in _config[section]:
-                        print("\t\tusername = {}".format(_config[section]["username"]))
+                        print(f'\t\tusername = {_config[section]["username"]}')
 
     """
     tables subdir
@@ -371,7 +360,7 @@ class Repository(Common):
                 self.TABLES_DIR,
                 self.TABLES_PLAN_DIR,
                 self.hash_dir(planid),
-                str(queryid) + "." + str(planid),
+                f"{str(queryid)}.{str(planid)}",
             ]
         )
 
@@ -382,7 +371,7 @@ class Repository(Common):
                 self.TABLES_DIR,
                 self.TABLES_PLAN_JSON_DIR,
                 self.hash_dir(planid),
-                str(queryid) + "." + str(planid),
+                f"{str(queryid)}.{str(planid)}",
             ]
         )
 
@@ -402,7 +391,7 @@ class Repository(Common):
                 str(queryid),
             ]
         )
-        _files = glob.glob(_dirpath + "[0-9]*")
+        _files = glob.glob(f"{_dirpath}[0-9]*")
         for _qf in _files:
             _seqid_file = _qf.split("/")[-1]
             # Get query
@@ -442,7 +431,7 @@ class Repository(Common):
     def get_grouping_plan_path(self, serverId, queryid, planid):
         return self.path(
             self.get_grouping_plan_dir_path(serverId, planid),
-            str(queryid) + "." + str(planid),
+            f"{str(queryid)}.{str(planid)}",
         )
 
     def get_grouping_dir_path(self, serverId):
@@ -479,13 +468,10 @@ class Repository(Common):
         return self.dirpath([serverId, self.REGRESSION_DIR, subdir])
 
     def get_regression_param(self, serverId, queryid, planid):
-        _key = str(queryid) + "." + str(planid)
+        _key = f"{str(queryid)}.{str(planid)}"
         _pathdir = self.dirpath([serverId, self.REGRESSION_DIR, self.hash_dir(planid)])
         _path = self.path(_pathdir, _key)
-        if os.path.exists(_path):
-            return self.read_plan_json(_path)
-        else:
-            return None
+        return self.read_plan_json(_path) if os.path.exists(_path) else None
 
     """
     formatted regression parameter subdir
@@ -500,16 +486,13 @@ class Repository(Common):
     def truncate_formatted_regression_params(self, serverId):
         _dir = self.get_formatted_regression_params_subdir_path(serverId)
         for _file_name in os.listdir(_dir):
-            os.remove(str(_dir) + "/" + str(_file_name))
+            os.remove(f"{str(_dir)}/{str(_file_name)}")
 
     def write_formatted_regression_params(self, serverId, queryid, param):
         _dir = self.get_formatted_regression_params_subdir_path(serverId)
-        with open(str(_dir) + "/" + str(queryid), mode="w") as _fp:
+        with open(f"{str(_dir)}/{str(queryid)}", mode="w") as _fp:
             _fp.write(param)
 
     def check_formatted_regression_params(self, serverId, queryid):
         _dir = self.get_formatted_regression_params_subdir_path(serverId)
-        for _file in os.listdir(_dir):
-            if str(_file) == str(queryid):
-                return True
-        return False
+        return any(str(_file) == str(queryid) for _file in os.listdir(_dir))
