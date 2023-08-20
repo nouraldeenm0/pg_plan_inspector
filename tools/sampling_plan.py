@@ -32,44 +32,30 @@ if __name__ == "__main__":
     # Functions
     def sampling(args):
         # Make connection parameter
-        conn = (
-            "host="
-            + str(args.host)
-            + " port="
-            + str(args.port)
-            + " dbname="
-            + str(args.dbname)
-            + " user="
-            + str(args.username)
-        )
+        conn = f"host={str(args.host)} port={str(args.port)} dbname={str(args.dbname)} user={str(args.username)}"
         if args.password is not None:
-            conn += " password=" + str(args.password)
+            conn += f" password={str(args.password)}"
 
         # Connect to database server
         try:
             connection = psycopg2.connect(conn)
         except psycopg2.OperationalError as e:
-            print("Could not connect to {}".format(args.host))
+            print(f"Could not connect to {args.host}")
             sys.exit(1)
 
         connection.autocommit = True
 
         # Welcome message
-        print("Connected to {}".format(args.host))
+        print(f"Connected to {args.host}")
 
         sleeptime = int(args.time)
         pid = args.pid
-
-        sql = (
-            "SELECT pid, database, worker_type, nested_level, queryid, query, planid, plan, plan_json FROM pg_query_plan("
-            + pid
-            + ")"
-        )
 
         count = 0
 
         c = Common()
 
+        sql = f"SELECT pid, database, worker_type, nested_level, queryid, query, planid, plan, plan_json FROM pg_query_plan({pid})"
         # Main loop
         while True:
 
@@ -93,9 +79,7 @@ if __name__ == "__main__":
 
             count += 1
             worker_no = 1
-            i = 1
-
-            for row in cur:
+            for i, row in enumerate(cur, start=1):
                 _pid = row[0]
                 _database = row[1]
                 _worker_type = row[2]
@@ -106,64 +90,32 @@ if __name__ == "__main__":
                 _plan = row[7]
                 _plan_json = row[8]
 
-                print(
-                    "[{}]----------------------------------------------------".format(i)
-                )
-                print("pid            :{}".format(_pid))
-                print("database       :{}".format(_database))
-                print("worker_type    :{}".format(_worker_type))
-                print("nested_level   :{}".format(_nested_level))
-                print("queryid        :{}".format(_queryid))
-                print("query          :\n{}".format(_query))
-                print("planid         :{}".format(_planid))
-                print("plan           :\n{}".format(_plan))
-                i += 1
-
+                print(f"[{i}]----------------------------------------------------")
+                print(f"pid            :{_pid}")
+                print(f"database       :{_database}")
+                print(f"worker_type    :{_worker_type}")
+                print(f"nested_level   :{_nested_level}")
+                print(f"queryid        :{_queryid}")
+                print(f"query          :\n{_query}")
+                print(f"planid         :{_planid}")
+                print(f"plan           :\n{_plan}")
                 if _worker_type == "leader":
                     if count == 1:
-                        fp = open(args.prefix + ".queryid", mode="w")
-                        fp.write("{}".format(_queryid))
-                        fp.close()
-                        fp = open(args.prefix + ".planid", mode="w")
-                        fp.write("{}".format(_planid))
-                        fp.close()
-                        fp = open(args.prefix + ".query", mode="w")
-                        fp.write("{}".format(_query))
-                        fp.close()
-
-                    fp = open(
-                        args.prefix + "-plan-" + str(count).zfill(3) + ".0", mode="w"
-                    )
-                    fp.write("{}".format(_plan))
-                    fp.close()
-                    fp = open(
-                        args.prefix + "-plan-json-" + str(count).zfill(3) + ".0",
-                        mode="w",
-                    )
-                    fp.write("{}".format(_plan_json))
-                    fp.close()
+                        with open(f"{args.prefix}.queryid", mode="w") as fp:
+                            fp.write(f"{_queryid}")
+                        with open(f"{args.prefix}.planid", mode="w") as fp:
+                            fp.write(f"{_planid}")
+                        with open(f"{args.prefix}.query", mode="w") as fp:
+                            fp.write(f"{_query}")
+                    with open(f"{args.prefix}-plan-{str(count).zfill(3)}.0", mode="w") as fp:
+                        fp.write(f"{_plan}")
+                    with open(f"{args.prefix}-plan-json-{str(count).zfill(3)}.0", mode="w") as fp:
+                        fp.write(f"{_plan_json}")
                 else:
-                    fp = open(
-                        args.prefix
-                        + "-plan-"
-                        + str(count).zfill(3)
-                        + "."
-                        + str(worker_no),
-                        mode="w",
-                    )
-                    fp.write("{}".format(_plan))
-                    fp.close()
-                    fp = open(
-                        args.prefix
-                        + "-plan-json-"
-                        + str(count).zfill(3)
-                        + "."
-                        + str(worker_no),
-                        mode="w",
-                    )
-                    fp.write("{}".format(_plan_json))
-                    fp.close()
-
+                    with open(f"{args.prefix}-plan-{str(count).zfill(3)}.{str(worker_no)}", mode="w") as fp:
+                        fp.write(f"{_plan}")
+                    with open(f"{args.prefix}-plan-json-{str(count).zfill(3)}.{str(worker_no)}", mode="w") as fp:
+                        fp.write(f"{_plan_json}")
                     worker_no += 1
 
             cur.close()
@@ -171,32 +123,28 @@ if __name__ == "__main__":
 
     def check(args):
         def read_queryid(prefix):
-            fp = open(prefix + ".queryid", "r")
-            queryid = fp.read()
-            fp.close()
+            with open(f"{prefix}.queryid", "r") as fp:
+                queryid = fp.read()
             return int(queryid)
 
         def read_planid(prefix):
-            fp = open(prefix + ".planid", "r")
-            queryid = fp.read()
-            fp.close()
+            with open(f"{prefix}.planid", "r") as fp:
+                queryid = fp.read()
             return int(queryid)
 
         def read_leader_dict(prefix, no):
-            path = prefix + "-plan-json-" + str(no).zfill(3) + ".0"
-            js = open(path, "r")
-            json_dict = json.load(js)
-            js.close()
+            path = f"{prefix}-plan-json-{str(no).zfill(3)}.0"
+            with open(path, "r") as js:
+                json_dict = json.load(js)
             return json_dict
 
         def read_worker_dicts(prefix, no):
             _dicts = []
             for i in range(1, 20):
-                path = prefix + "-plan-json-" + str(no).zfill(3) + "." + str(i)
+                path = f"{prefix}-plan-json-{str(no).zfill(3)}.{str(i)}"
                 if os.path.exists(path):
-                    js = open(path, "r")
-                    json_dict = json.load(js)
-                    js.close()
+                    with open(path, "r") as js:
+                        json_dict = json.load(js)
                     _dicts.append(json_dict)
                 else:
                     break

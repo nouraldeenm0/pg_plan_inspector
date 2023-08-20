@@ -350,8 +350,8 @@ class Replace(Common):
         i = numNode
         if Log.debug1 <= self.LogLevel:
             print("Debug1: >>> Start replace")
-        while 0 < i:
+        while i > 0:
             if Log.debug1 <= self.LogLevel:
-                print("Debug1: >>> replace i = {}".format(i))
+                print(f"Debug1: >>> replace i = {i}")
             self.__replace(Plans, Reg_Params, i, queryid, planid)
             i -= 1

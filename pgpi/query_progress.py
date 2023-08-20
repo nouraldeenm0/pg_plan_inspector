@@ -106,17 +106,16 @@ class Node(Common):
             if plan["CurrentState"] == State.FINISHED:
                 plan["ExpectedRows"] = plan["PlanPoints"]
                 plan["ActualPoints"] = plan["Actual Rows"]
+            elif (_estimated_points - removed_rows) == plan["Actual Rows"]:
+                plan["ExpectedRows"] = plan["Actual Rows"]
+                plan["ActualPoints"] = _estimated_points
             else:
-                if (_estimated_points - removed_rows) == plan["Actual Rows"]:
-                    plan["ExpectedRows"] = plan["Actual Rows"]
-                    plan["ActualPoints"] = _estimated_points
-                else:
-                    plan["ExpectedRows"] = estimate_rows(
-                        plan["Plan Rows"],
-                        (_estimated_points - removed_rows),
-                        plan["Actual Rows"],
-                    )
-                    plan["ActualPoints"] = plan["Actual Rows"] + removed_rows
+                plan["ExpectedRows"] = estimate_rows(
+                    plan["Plan Rows"],
+                    (_estimated_points - removed_rows),
+                    plan["Actual Rows"],
+                )
+                plan["ActualPoints"] = plan["Actual Rows"] + removed_rows
         else:
             print("******Never reach********")
 
@@ -182,86 +181,50 @@ class Node(Common):
         _nodeType = plan["Node Type"]
 
         # For the nodes that have one or no child (plan).
-        if _nodeType == "Result":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Seq Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Sample Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Index Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Index Only Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Bitmap Index Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Bitmap Heap Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Tid Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Function Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Table Function Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Values Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "CTE Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Named Tuplestore Scan":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "WorkTable Scan":  # TODO: Need to check
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Foreign Scan":  # TODO: Need to check
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Aggregate":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "SetOp":
-            self.__simpleOp(plan, plan, self.__O_N)
-        elif _nodeType == "Limit":
-            self.__simpleOp(plan, plan, self.__O_N)
-
-        # For the nodes that have one child (plan).
-        elif _nodeType == "Hash":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "ProjectSet":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "Subquery Scan":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "Custom Scan":  # TODO: Need to check
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "Materialize":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "Sort":
-            self.__simpleListOp(plan, self.__O_NlogN)
-        elif _nodeType == "Incremental Sort":
-            self.__simpleListOp(plan, self.__O_NlogN)
-        elif _nodeType == "Gather":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "Gather Merge":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "LockRows":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "Unique":
-            self.__simpleListOp(plan, self.__O_N)
-        elif _nodeType == "WindowAgg":
-            self.__simpleListOp(plan, self.__O_N)
-
-        # For the nodes that have two children (plans).
-        elif _nodeType == "Append":
+        if _nodeType in ["Append", "Merge Append", "BitmapAnd", "BitmapOr"]:
             self.__joinOp(plan, max, operator.add)
-        elif _nodeType == "Merge Append":
-            self.__joinOp(plan, max, operator.add)
-        elif _nodeType == "Recursive Union":
-            self.__joinOp(plan, max, operator.mul)
-        elif _nodeType == "Nested Loop":
-            self.__joinOp(plan, max, operator.mul)
-        elif _nodeType == "Merge Join":
-            self.__joinOp(plan, self.__heuristics, self.__outer)
         elif _nodeType == "Hash Join":
             self.__joinOp(plan, self.__heuristics, operator.add)
-        elif _nodeType == "BitmapAnd":
-            self.__joinOp(plan, max, operator.add)
-        elif _nodeType == "BitmapOr":
-            self.__joinOp(plan, max, operator.add)
+        elif _nodeType in [
+            "Hash",
+            "ProjectSet",
+            "Subquery Scan",
+            "Custom Scan",
+            "Materialize",
+            "Gather",
+            "Gather Merge",
+            "LockRows",
+            "Unique",
+            "WindowAgg",
+        ]:
+            self.__simpleListOp(plan, self.__O_N)
+        elif _nodeType == "Merge Join":
+            self.__joinOp(plan, self.__heuristics, self.__outer)
+        elif _nodeType in ["Recursive Union", "Nested Loop"]:
+            self.__joinOp(plan, max, operator.mul)
+        elif _nodeType in [
+            "Result",
+            "Seq Scan",
+            "Sample Scan",
+            "Index Scan",
+            "Index Only Scan",
+            "Bitmap Index Scan",
+            "Bitmap Heap Scan",
+            "Tid Scan",
+            "Function Scan",
+            "Table Function Scan",
+            "Values Scan",
+            "CTE Scan",
+            "Named Tuplestore Scan",
+            "WorkTable Scan",
+            "Foreign Scan",
+            "Aggregate",
+            "SetOp",
+            "Limit",
+        ]:
+            self.__simpleOp(plan, plan, self.__O_N)
+        elif _nodeType in ["Sort", "Incremental Sort"]:
+            self.__simpleListOp(plan, self.__O_NlogN)
 
 
 class CalcNode(Node):
@@ -317,13 +280,14 @@ class CalcNode(Node):
                 del plan[_i]
 
         """Add 'ExpectedRows', 'ActualPoints' and 'PlanPoints'."""
-        if "Actual Rows" in plan:
-            plan.update(ExpectedRows=0, ActualPoints=0, PlanPoints=0)
+        if "Actual Rows" not in plan:
+            return state
+        plan.update(ExpectedRows=0, ActualPoints=0, PlanPoints=0)
 
-            if Log.debug5 <= self.LogLevel:
-                print("Debug5: NodeType={}".format(plan["Node Type"]))
+        if Log.debug5 <= self.LogLevel:
+            print(f'Debug5: NodeType={plan["Node Type"]}')
 
-            """
+        """
             Add an object 'CurrentState' and Set the appropriate state.
 
             If no use of the regression parameters to estimate the progress,
@@ -332,44 +296,42 @@ class CalcNode(Node):
             Otherwise, i.e. if using the regression parameters, the value
             of CurrentState is not used.
             """
-            if state == State.WAITING:
-                if (
-                    plan["Actual Rows"] == 0
-                    and plan["Actual Loops"] == 0
-                    and self.count_removed_rows(plan) == 0
-                ):
-                    if Log.debug5 <= self.LogLevel:
-                        print(
-                            "Debug5:   WAITING -> WAITING ActualRows == 0 "
-                            + "AND ActualLoops == 0 AND RemovedRows == 0"
-                        )
-                    plan.update(CurrentState=state)
-                    return state
-                else:
-                    if Log.debug5 <= self.LogLevel:
-                        print(
-                            "Debug5:   WAITING -> RUNNING ActualRows != 0 "
-                            + "OR ActualLoops != 0 OR RemovedRows != 0"
-                        )
-                    plan.update(CurrentState=State.RUNNING)
-                    return State.RUNNING
-            elif state == State.RUNNING:
-                if ((is_outer_running)) and self.isScan(plan):
-                    if Log.debug5 <= self.LogLevel:
-                        print("Debug5:   RUNNING -> FINISHED  Outer running AND scan")
-                    plan.update(CurrentState=State.FINISHED)
-                    return State.FINISHED
-                else:
-                    if Log.debug5 <= self.LogLevel:
-                        print("Debug5:   RUNING -> RUNING  !Outer running OR !scan")
-                    plan.update(CurrentState=State.RUNNING)
-                    return state
-            else:  # state == State.FINISHED
+        if state == State.WAITING:
+            if (
+                plan["Actual Rows"] == 0
+                and plan["Actual Loops"] == 0
+                and self.count_removed_rows(plan) == 0
+            ):
                 if Log.debug5 <= self.LogLevel:
-                    print("Debug5:   FINISHED -> FINISHED")
-                plan.update(CurrentState=State.FINISHED)
+                    print(
+                        "Debug5:   WAITING -> WAITING ActualRows == 0 "
+                        + "AND ActualLoops == 0 AND RemovedRows == 0"
+                    )
+                plan.update(CurrentState=state)
                 return state
-        else:
+            else:
+                if Log.debug5 <= self.LogLevel:
+                    print(
+                        "Debug5:   WAITING -> RUNNING ActualRows != 0 "
+                        + "OR ActualLoops != 0 OR RemovedRows != 0"
+                    )
+                plan.update(CurrentState=State.RUNNING)
+                return State.RUNNING
+        elif state == State.RUNNING:
+            if ((is_outer_running)) and self.isScan(plan):
+                if Log.debug5 <= self.LogLevel:
+                    print("Debug5:   RUNNING -> FINISHED  Outer running AND scan")
+                plan.update(CurrentState=State.FINISHED)
+                return State.FINISHED
+            else:
+                if Log.debug5 <= self.LogLevel:
+                    print("Debug5:   RUNING -> RUNING  !Outer running OR !scan")
+                plan.update(CurrentState=State.RUNNING)
+                return state
+        else:  # state == State.FINISHED
+            if Log.debug5 <= self.LogLevel:
+                print("Debug5:   FINISHED -> FINISHED")
+            plan.update(CurrentState=State.FINISHED)
             return state
 
     """
@@ -394,7 +356,7 @@ class CalcNode(Node):
                                 plan["Node Type"], plan["CurrentState"]
                             )
                         )
-                    _is_outer_running = True if plan["Actual Loops"] > 0 else False
+                    _is_outer_running = plan["Actual Loops"] > 0
                     if "Plans" in plan:
                         op(plan["Plans"], _state)
                 return
@@ -638,11 +600,11 @@ class QueryProgress(MergePlan, Replace, Rules, CalcNode):
         percent = min(100, percent)
         _p = int(percent)
 
-        _p_bar = str(u"\u258e") if _p == 0 else ""
+        _p_bar = "\u258e" if _p == 0 else ""
         for _i in range(
             0, (lambda p, small: (p // 4) if small else (p // 2))(_p, small)
         ):
-            _p_bar += str(u"\u2588")
+            _p_bar += "\u2588"
         _p_bar += str(
             qSteps[(lambda p, small: (p % 4) if small else (p % 2) * 2)(_p, small)]
         )
@@ -656,7 +618,7 @@ class QueryProgress(MergePlan, Replace, Rules, CalcNode):
         ):
             _p_bar += " "
         if _p < 100:
-            _p_bar += str(u"\u258f")
+            _p_bar += "\u258f"
         return _p_bar
 
     def query_progress(self, plan_list, server_id=None):

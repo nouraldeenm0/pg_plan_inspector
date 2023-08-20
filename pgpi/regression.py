@@ -42,30 +42,24 @@ class CalcRegression:
         _sumX = sum(X)
         if Log.debug3 <= self.LogLevel:
             print("Debug3: ----- SCAN ----")
-            print("Debug3:       ===> X = {}".format(X))
-            print("Debug3:       ===> Y = {}".format(Y))
+            print(f"Debug3:       ===> X = {X}")
+            print(f"Debug3:       ===> Y = {Y}")
         if 250 * _sumY < _sumX:
             # Assume that this data set is fit to a constant function.
             if Log.debug3 <= self.LogLevel:
                 print(
-                    "Debug3:       ==> coef = 0    intercept = {}".format(
-                        float(round(_sumY / len(Y), 5))
-                    )
+                    f"Debug3:       ==> coef = 0    intercept = {float(round(_sumY / len(Y), 5))}"
                 )
             return (0.0, float(round(_sumY / len(Y), 5)))
         else:
             if Log.debug3 <= self.LogLevel:
                 if _sumX == 0:
                     print(
-                        "Debug3:       ==> coef = 0   intercept = {}".format(
-                            float(round(_sumY / len(Y), 5))
-                        )
+                        f"Debug3:       ==> coef = 0   intercept = {float(round(_sumY / len(Y), 5))}"
                     )
                 else:
                     print(
-                        "Debug3:       ==> coef = {}  intercept = 0".format(
-                            float(round(_sumY / _sumX, 5))
-                        )
+                        f"Debug3:       ==> coef = {float(round(_sumY / _sumX, 5))}  intercept = 0"
                     )
 
             if _sumX == 0:
@@ -84,20 +78,16 @@ class CalcRegression:
 
         if Log.debug3 <= self.LogLevel:
             print("Debug3: ---- GATHER ----")
-            print("Debug3:       ===> X = {}".format(X))
-            print("Debug3:       ===> Y = {}".format(Y))
+            print(f"Debug3:       ===> X = {X}")
+            print(f"Debug3:       ===> Y = {Y}")
         if Log.debug3 <= self.LogLevel:
             if _sumX == 0:
                 print(
-                    "Debug3:       ==> coef = 0   intercept = {}".format(
-                        float(round(_sumY / len(Y), 5))
-                    )
+                    f"Debug3:       ==> coef = 0   intercept = {float(round(_sumY / len(Y), 5))}"
                 )
             else:
                 print(
-                    "Debug3:       ==> coef = {}  intercept = 0".format(
-                        float(round(_sumY / _sumX, 5))
-                    )
+                    f"Debug3:       ==> coef = {float(round(_sumY / _sumX, 5))}  intercept = 0"
                 )
 
         if _sumX == 0:
@@ -129,13 +119,13 @@ class CalcRegression:
         )
         if Log.debug3 <= self.LogLevel:
             print("Debug3: +++++ NESTED LOOP JOIN +++++")
-            print("Debug3:       ===> Xouter = {}".format(Xouter))
-            print("Debug3:       ===> Xinner = {}".format(Xinner))
-            print("Debug3:       ===>      Y = {}".format(Y))
+            print(f"Debug3:       ===> Xouter = {Xouter}")
+            print(f"Debug3:       ===> Xinner = {Xinner}")
+            print(f"Debug3:       ===>      Y = {Y}")
             if _sumX == 0:
                 print("Debug3:       ==> coef=1")
             else:
-                print("Debug3:       ==> coef={}".format(str(round(_sumY / _sumX, 5))))
+                print(f"Debug3:       ==> coef={str(round(_sumY / _sumX, 5))}")
 
         return 1.0 if _sumX == 0 else float(_sumY / _sumX)
 
@@ -212,7 +202,7 @@ class CalcRegression:
             _rmse = np.sqrt(mean_squared_error(_Y, _y_pred))
 
             del scireg
-            return (float(_coef[0]), float(_intercept), _rmse)
+            return float(_coef[0]), _intercept, _rmse
 
         def reg(Xouter, Xinner, Y):
             ## Same as NestedLoop
@@ -332,16 +322,16 @@ class Regression(Repository, CalcRegression):
             Use list(plan) instead of plan.keys() to avoid
             "RuntimeError: dictionary changed size during iteration" error.
             """
-            if (
-                k != "Node Type"
-                and k != "Plans"
-                and k != "Plan"
-                and k != "Relation Name"
-                and k != "Schema"
-                and k != "Alias"
-                and k != "Parent Relationship"
-                and k != "MergeFlag"
-            ):
+            if k not in [
+                "Node Type",
+                "Plans",
+                "Plan",
+                "Relation Name",
+                "Schema",
+                "Alias",
+                "Parent Relationship",
+                "MergeFlag",
+            ]:
                 plan.pop(k)
         return plan
 
@@ -376,11 +366,9 @@ class Regression(Repository, CalcRegression):
                 Calculate the regression parameter.
                 """
                 if Log.debug3 <= self.LogLevel:
-                    print("Debug3: === NodeType={}".format(n))
-                    print("Debug3: *** Y ActualRows={}".format(plan["Actual Rows"]))
-                    print(
-                        "Debug3: *** Xouter ={}    Xinner ={}".format(_Xouter, _Xinner)
-                    )
+                    print(f"Debug3: === NodeType={n}")
+                    print(f'Debug3: *** Y ActualRows={plan["Actual Rows"]}')
+                    print(f"Debug3: *** Xouter ={_Xouter}    Xinner ={_Xinner}")
 
                 _Y = plan["Actual Rows"]
                 _coef = self.nested_loop(_Xouter, _Xinner, _Y)
@@ -409,16 +397,12 @@ class Regression(Repository, CalcRegression):
                 """
                 if Log.debug3 <= self.LogLevel:
                     print(
-                        "Debug3: HASH or MERGE depth={}  RR={}  queryid={} planid={}".format(
-                            depth, _RR, queryid, planid
-                        )
+                        f"Debug3: HASH or MERGE depth={depth}  RR={_RR}  queryid={queryid} planid={planid}"
                     )
                 if Log.debug3 <= self.LogLevel:
-                    print("Debug3: === NodeType={}".format(n))
-                    print("Debug3: *** Y ActualRows={}".format(plan["Actual Rows"]))
-                    print(
-                        "Debug3: *** Xouter ={}    Xinner ={}".format(_Xouter, _Xinner)
-                    )
+                    print(f"Debug3: === NodeType={n}")
+                    print(f'Debug3: *** Y ActualRows={plan["Actual Rows"]}')
+                    print(f"Debug3: *** Xouter ={_Xouter}    Xinner ={_Xinner}")
 
                 _Y = plan["Actual Rows"]
                 (_coef, _reg, _intercept) = self.merge_or_hash_join(
@@ -443,15 +427,11 @@ class Regression(Repository, CalcRegression):
 
         """Calculate the regression parameter."""
         if Log.debug3 <= self.LogLevel:
-            print("Debug3: === NodeType={}".format(_node_type))
+            print(f"Debug3: === NodeType={_node_type}")
             print(
-                "Debug3: *** Plan Rows={}      NormalizeParam={}      NormalizePlanParam={}".format(
-                    plan["Plan Rows"],
-                    plan["NormalizeParam"],
-                    plan["NormalizePlanParam"],
-                )
+                f'Debug3: *** Plan Rows={plan["Plan Rows"]}      NormalizeParam={plan["NormalizeParam"]}      NormalizePlanParam={plan["NormalizePlanParam"]}'
             )
-            print("Debug3: *** Actual Rows={}".format(plan["Actual Rows"]))
+            print(f'Debug3: *** Actual Rows={plan["Actual Rows"]}')
 
         (_coef, _intercept) = self.scan(plan["Plan Rows"], plan["Actual Rows"])
 
@@ -491,79 +471,80 @@ class Regression(Repository, CalcRegression):
         """
 
         def get_relations(plan):
-            if "Relation Name" not in plan:
-                if "Plans" in plan:
-                    __plan = plan["Plans"]
-                elif "Plan" in plan:
-                    __plan = plan["Plan"]
+            if "Relation Name" in plan:
+                return
+            if "Plans" in plan:
+                __plan = plan["Plans"]
+            elif "Plan" in plan:
+                __plan = plan["Plan"]
+            else:
+                return
+            if isinstance(__plan, list):
+                __outer_plan = __plan[0]
+                __inner_plan = __plan[1] if 2 <= len(__plan) else None
+                if __inner_plan is None:
+                    if "Relation Name" in __outer_plan:
+                        plan.update(
+                            [
+                                (
+                                    "Relation Name",
+                                    __outer_plan["Relation Name"],
+                                )
+                            ]
+                        )
+                    if "Schema" in __outer_plan:
+                        plan.update([("Schema", __outer_plan["Schema"])])
+                    if "Alias" in __outer_plan:
+                        plan.update([("Alias", __outer_plan["Alias"])])
                 else:
-                    return
-                if isinstance(__plan, list):
-                    __outer_plan = __plan[0]
-                    __inner_plan = __plan[1] if 2 <= len(__plan) else None
-                    if __inner_plan is None:
-                        if "Relation Name" in __outer_plan:
-                            plan.update(
-                                [
-                                    (
-                                        "Relation Name",
+                    if (
+                        "Relation Name" in __outer_plan
+                        and "Relation Name" in __inner_plan
+                    ):
+                        plan.update(
+                            [
+                                (
+                                    "Relation Name",
+                                    [
                                         __outer_plan["Relation Name"],
-                                    )
-                                ]
-                            )
-                        if "Schema" in __outer_plan:
-                            plan.update([("Schema", __outer_plan["Schema"])])
-                        if "Alias" in __outer_plan:
-                            plan.update([("Alias", __outer_plan["Alias"])])
-                    else:
-                        if (
-                            "Relation Name" in __outer_plan
-                            and "Relation Name" in __inner_plan
-                        ):
-                            plan.update(
-                                [
-                                    (
-                                        "Relation Name",
-                                        [
-                                            __outer_plan["Relation Name"],
-                                            __inner_plan["Relation Name"],
-                                        ],
-                                    )
-                                ]
-                            )
+                                        __inner_plan["Relation Name"],
+                                    ],
+                                )
+                            ]
+                        )
 
-                        if "Schema" in __outer_plan and "Schema" in __inner_plan:
-                            plan.update(
-                                [
-                                    (
-                                        "Schema",
-                                        [
-                                            __outer_plan["Schema"],
-                                            __inner_plan["Schema"],
-                                        ],
-                                    )
-                                ]
-                            )
+                    if "Schema" in __outer_plan and "Schema" in __inner_plan:
+                        plan.update(
+                            [
+                                (
+                                    "Schema",
+                                    [
+                                        __outer_plan["Schema"],
+                                        __inner_plan["Schema"],
+                                    ],
+                                )
+                            ]
+                        )
 
-                        if "Alias" in __outer_plan and "Alias" in __inner_plan:
-                            plan.update(
-                                [
-                                    (
-                                        "Alias",
-                                        [
-                                            __outer_plan["Alias"],
-                                            __inner_plan["Alias"],
-                                        ],
-                                    )
-                                ]
-                            )
-                else:
-                    if "Relation Name" in __plan:
-                        plan.update([("Relation Name", __plan["Relation Name"])])
-                    if "Schema" in __plan:
-                        plan.update([("Schema", __plan["Schema"])])
-                    if "Alias" in __plan:
-                        plan.update([("Alias", __plan["Alias"])])
+                    if "Alias" in __outer_plan and "Alias" in __inner_plan:
+                        plan.update(
+                            [
+                                (
+                                    "Alias",
+                                    [
+                                        __outer_plan["Alias"],
+                                        __inner_plan["Alias"],
+                                    ],
+                                )
+                            ]
+                        )
+            else:
+                if "Relation Name" in __plan:
+                    plan.update([("Relation Name", __plan["Relation Name"])])
+                if "Schema" in __plan:
+                    plan.update([("Schema", __plan["Schema"])])
+                if "Alias" in __plan:
+                    plan.update([("Alias", __plan["Alias"])])
 
         def incr(plan):
             if "Node Type" in plan:
@@ -595,7 +576,7 @@ class Regression(Repository, CalcRegression):
         Add "Relation Name"
         """
         i = self.count_nodes(Plans)
-        while 0 < i:
+        while i > 0:
             self.__set_relations(Plans["Plan"], i)
             i -= 1
 
@@ -701,7 +682,7 @@ class Regression(Repository, CalcRegression):
 
         if self.check_serverId(serverId) == False:
             if Log.error <= self.LogLevel:
-                print("Error: serverId '{}' is not registered.".format(serverId))
+                print(f"Error: serverId '{serverId}' is not registered.")
             sys.exit(1)
 
         self.__set_serverId(serverId)
@@ -723,9 +704,7 @@ class Regression(Repository, CalcRegression):
 
         if Log.debug3 <= self.LogLevel:
             print(
-                "Debug3: _grouping_seqid={} _regression_seqid={}".format(
-                    _grouping_seqid, _regression_seqid
-                )
+                f"Debug3: _grouping_seqid={_grouping_seqid} _regression_seqid={_regression_seqid}"
             )
 
         """
@@ -745,7 +724,7 @@ class Regression(Repository, CalcRegression):
                         _queryid = _qp_id[0]
                         _planid = _qp_id[1]
                         if Log.debug3 <= self.LogLevel:
-                            print("Debug3: >>>>>> gpath={}".format(_gpath))
+                            print(f"Debug3: >>>>>> gpath={_gpath}")
 
                         _json_dict = self.read_plan_json(_gpath)
                         _reg_param = self.read_plan_json(_gpath)
@@ -790,8 +769,8 @@ class Regression(Repository, CalcRegression):
                         self.write_plan_json(_reg_param, _rpath)
 
                         if Log.debug3 <= self.LogLevel:
-                            print("Debug3: Rpath={}".format(_rpath))
-                            print("Debug3:   reg_param={}".format(_reg_param))
+                            print(f"Debug3: Rpath={_rpath}")
+                            print(f"Debug3:   reg_param={_reg_param}")
 
             """Update stat file"""
             self.update_regression_stat_file(self.ServerId, _grouping_seqid)

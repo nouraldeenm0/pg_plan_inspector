@@ -37,10 +37,10 @@ class NN:
         _values = [depth, node_type, xouter, xinner, y]
         _dict = dict(zip(_keys, _values))
 
-        _pathdir = self.NN_DIR + "/" + serverId + "/"
+        _pathdir = f"{self.NN_DIR}/{serverId}/"
         if os.path.exists(_pathdir) == False:
             os.makedirs(_pathdir, self.DEFAULT_DIR_MODE)
-        _path = self.path(_pathdir, str(queryid) + "." + str(planid) + "." + str(depth))
+        _path = self.path(_pathdir, f"{str(queryid)}.{str(planid)}.{str(depth)}")
         self.write_plan_json(_dict, _path)
 
 
@@ -62,11 +62,8 @@ class ExtendedStatistics:
     )
 
     def __check_conds(self, conds):
-        _ret = []
-        for _cond in conds:
-            if re.search(r">|<", _cond) == None:
-                _ret.append(_cond)
-        return list(set(_ret)) if len(_ret) > 0 else None
+        _ret = [_cond for _cond in conds if re.search(r">|<", _cond) is None]
+        return list(set(_ret)) if _ret else None
 
     def check_es(self, plan, queryid, planid, depth):
         def check_conds(plan):
@@ -127,8 +124,7 @@ class Histogram:
     def __min_max(self, y):
         _max = 0
         for i in range(0, len(y)):
-            if _max < y[i]:
-                _max = y[i]
+            _max = max(_max, y[i])
         _min = _max
         for i in range(0, len(y)):
             if y[i] < _min:
@@ -140,7 +136,7 @@ class Histogram:
             _ret = []
             for _cond in conds:
                 _ret.append(_cond)
-            return list(set(_ret)) if len(_ret) > 0 else None
+            return list(set(_ret)) if _ret else None
 
         def create_item(_dict_list, y, x, _lower, _upper):
             _d = {
@@ -365,7 +361,7 @@ class Analyze(Repository, ExtendedStatistics, NN, Histogram):
 
         if self.check_serverId(serverId) == False:
             if Log.error <= self.LogLevel:
-                print("Error: serverId '{}' is not registered.".format(serverId))
+                print(f"Error: serverId '{serverId}' is not registered.")
             sys.exit(1)
 
         self.__set_serverId(serverId)
@@ -376,10 +372,10 @@ class Analyze(Repository, ExtendedStatistics, NN, Histogram):
             _file = self.__get_file_name(_prefix)
             if os.path.exists(_file):
                 if Log.info <= self.LogLevel:
-                    print("Info: Remove '{}'".format(_file))
+                    print(f"Info: Remove '{_file}'")
                 os.remove(_file)
             if Log.info <= self.LogLevel:
-                print("Info: Create '{}'".format(_file))
+                print(f"Info: Create '{_file}'")
             with open(_file, "w"):
                 pass
 

@@ -68,7 +68,7 @@ class Rules(Common):
     def __rule6(self, plan):
         if (
             plan["CurrentState"] == State.RUNNING
-            and (plan["Node Type"] == "Hash Join" or plan["Node Type"] == "Merge Join")
+            and plan["Node Type"] in ["Hash Join", "Merge Join"]
             and "Join Filter" not in plan
         ):
             # Magic rule
@@ -85,13 +85,13 @@ class Rules(Common):
                     r(plan)
                 if "Plans" in plan:
                     self.__op(plan["Plans"])
-            return
         else:
             for r in self.rules:
                 r(Plans)
             if "Plans" in Plans:
                 self.__op(Plans["Plans"])
-            return
+
+        return
 
     """
     Public method
